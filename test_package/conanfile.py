@@ -1,11 +1,12 @@
 import os
 
 from conans import ConanFile, CMake, tools
-
+from shutil import copy
 
 class VireoTestConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
     generators = "cmake"
+    requires = "vireo/0.1"
 
     def build(self):
         cmake = CMake(self)
@@ -13,6 +14,7 @@ class VireoTestConan(ConanFile):
         # in "test_package"
         cmake.configure()
         cmake.build()
+        copy(os.path.join(self.source_folder, "helloworld.mp4"), "bin")
 
     def imports(self):
         self.copy("*.dll", dst="bin", src="bin")
@@ -22,4 +24,4 @@ class VireoTestConan(ConanFile):
     def test(self):
         if not tools.cross_building(self.settings):
             os.chdir("bin")
-            self.run(".%sexample" % os.sep)
+            self.run(".%shelloworld" % os.sep)

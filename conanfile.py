@@ -1,47 +1,54 @@
 from conans import ConanFile, CMake, tools
-
+from conans.errors import ConanInvalidConfiguration
+import os
 
 class VireoConan(ConanFile):
     name = "vireo"
     version = "0.1"
-    license = "<Put the package license here>"
+    license = "MIT"
     author = "<Put your name here> <And your email here>"
     url = "<Package recipe repository url here, for issues about the package>"
-    description = "<Description of Vireo here>"
-    topics = ("<Put some tag here>", "<here>", "<and here>")
+    description = "Vireo is a lightweight and versatile video processing library written in C++11"
+    topics = ("video processing")
     settings = "os", "compiler", "build_type", "arch"
-    options = {"shared": [True, False]}
-    default_options = "shared=False"
+    options = {"shared": [True, False], "GPL": [True, False]}
+    default_options = "shared=False", "GPL=False"
     generators = "cmake"
+    #requires = "ffmpeg/4.0.2@bincrafters/stable"
 
     def source(self):
-        self.run("git clone https://github.com/conan-io/hello.git")
-        # This small hack might be useful to guarantee proper /MT /MD linkage
-        # in MSVC if the packaged project doesn't have variables to set it
-        # properly
-        tools.replace_in_file("hello/CMakeLists.txt", "PROJECT(HelloWorld)",
-                              '''PROJECT(HelloWorld)
-include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-conan_basic_setup()''')
+        self.run("git clone --depth 1 https://github.com/twitter/vireo")
 
     def build(self):
-        cmake = CMake(self)
-        cmake.configure(source_folder="hello")
-        cmake.build()
-
-        # Explicit way:
-        # self.run('cmake %s/hello %s'
-        #          % (self.source_folder, cmake.command_line))
-        # self.run("cmake --build . %s" % cmake.build_config)
+        print("pwd build folder: {}".format(os.getcwd()))
+        print("build folder: {}".format(self.build_folder))
+        temp_installed_folder = os.path.join(self.build_folder, 'temp_installed')
+        with tools.chdir("./vireo/vireo"):
+            self.run('./configure --prefix={}'.format(temp_installed_folder))        
+            self.run('make')        
 
     def package(self):
-        self.copy("*.h", dst="include", src="hello")
-        self.copy("*hello.lib", dst="lib", keep_path=False)
-        self.copy("*.dll", dst="bin", keep_path=False)
-        self.copy("*.so", dst="lib", keep_path=False)
-        self.copy("*.dylib", dst="lib", keep_path=False)
-        self.copy("*.a", dst="lib", keep_path=False)
+        print("pwd package folder: {}".format(os.getcwd()))
+        print("package folder: {}".format(self.package_folder))
+        with tools.chdir("./vireo/vireo"):        
+            self.run('make install')       
+        src_include = 'temp_installed/include'
+        src_bin = 'temp_installed/bin'
+        src_lib = 'temp_installed/lib'
+        self.copy(pattern="*", dst="include", src=src_include)
+        self.copy(pattern="*", dst="bin", src=src_bin)
+        self.copy(pattern="*.so*", dst="bin", src=src_lib)
+        self.copy(pattern="*", dst="lib", src=src_lib)
+        # self.copy(pattern="*.lib", dst="lib", src=src_lib)
+        # self.copy(pattern="*.a", dst="lib", src=src_lib)
 
     def package_info(self):
-        self.cpp_info.libs = ["hello"]
+        self.cpp_info.libs = ["vireo", "imagecore"]
 
+# "libpng/1.6.37@bincrafters/stable", \
+# "libjpeg/9c@bincrafters/stable", \
+# "libfdk_aac/2.0.0@bincrafters/stable", \
+# "libvpx/1.8.0@bincrafters/stable", \
+# "ogg/1.3.3@bincrafters/stable", \
+# "libogg/1.3.2@lasote/vcpkg", \
+# "vorbis/1.3.6@bincrafters/stable", \
