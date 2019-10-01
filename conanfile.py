@@ -1,4 +1,4 @@
-from conans import ConanFile
+from conans import ConanFile, AutoToolsBuildEnvironment, tools
 import os
 
 class VireoConan(ConanFile):
@@ -10,18 +10,19 @@ class VireoConan(ConanFile):
     description = "Vireo is a lightweight and versatile video processing library written in C++11"
     topics = ("video processing")
     settings = "os", "compiler", "build_type", "arch"
+    options = {"shared": [True, False]}                                                                                                                 
+    default_options = "shared=False"
 
     def source(self):
-        self.run("git clone --depth 1 https://github.com/twitter/vireo")
+        repo = tools.Git()
+        repo.clone('https://github.com/twitter/vireo', shallow=True)
 
     def build(self):
-        os.chdir("./vireo/vireo")
-        self.run('./configure --prefix={}'.format(self.package_folder))        
-        self.run('make')        
-
-    def package(self):
-        os.chdir("./vireo/vireo")
-        self.run('make install')       
-
+        os.chdir("vireo")
+        autotools = AutoToolsBuildEnvironment(self, win_bash=tools.os_info.is_windows)
+        autotools.configure()
+        autotools.make()
+        autotools.install()
+ 
     def package_info(self):
         self.cpp_info.libs = ["vireo", "imagecore"]
