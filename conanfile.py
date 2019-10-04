@@ -11,8 +11,8 @@ class VireoConan(ConanFile):
     description = "Vireo is a lightweight and versatile video processing library written in C++11"
     topics = ("video processing")
     settings = "os", "compiler", "build_type", "arch"
-    options = {"shared": [True, False]}
-    default_options = "shared=False"
+    options = {"shared": [True, False], "GPL": [True, False]}
+    default_options = {"shared": False, "GPL": False}
     requires = "libjpeg-turbo/2.0.2@bincrafters/stable"
 
     def source(self):
@@ -23,7 +23,8 @@ class VireoConan(ConanFile):
         os.chdir(f"{self.source_folder}/vireo")
         autotools = AutoToolsBuildEnvironment(
             self, win_bash=tools.os_info.is_windows)
-        autotools.configure()
+        args = ["--enable-gpl"] if self.options.GPL else []
+        autotools.configure(args=args)
         autotools.make()
         autotools.install()
 

@@ -25,6 +25,9 @@
 extern "C" {
 #include "libavformat/avformat.h"
 #include "libavcodec/avcodec.h"
+#ifndef AV_INPUT_BUFFER_PADDING_SIZE
+#define AV_INPUT_BUFFER_PADDING_SIZE FF_INPUT_BUFFER_PADDING_SIZE
+#endif
 #include "lsmash.h"
 #include "lsmash-h264.h"
 }
@@ -77,7 +80,7 @@ struct ADTSHeader {
 
 struct _MP2TS {
   common::Reader reader;
-  common::Data32 iobuffer = common::Data32((uint8_t*)av_malloc(kSize_Buffer + FF_INPUT_BUFFER_PADDING_SIZE), kSize_Buffer + FF_INPUT_BUFFER_PADDING_SIZE, [](uint8_t*p){ av_free(p); });
+  common::Data32 iobuffer = common::Data32((uint8_t*)av_malloc(kSize_Buffer + AV_INPUT_BUFFER_PADDING_SIZE), kSize_Buffer + AV_INPUT_BUFFER_PADDING_SIZE, [](uint8_t*p){ av_free(p); });
   unique_ptr<AVFormatContext, function<void(AVFormatContext*)>> format_context = { nullptr, [](AVFormatContext* p) {
     if (p->pb) {
       av_free(p->pb);
